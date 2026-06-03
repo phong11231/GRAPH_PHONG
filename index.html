@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link rel="stylesheet" href="trang.css" />
+    <script src="trang.js" defer></script>
+    <script src="Ma_Hoat_Dong/Graph.js" defer></script>
+    <script src="Ma_Hoat_Dong/Chu_Trinh_Euler.js" defer></script>
+    <script src="Ma_Hoat_Dong/Duong_Di_Euler.js" defer></script>
+    <script src="Ma_Hoat_Dong/BFS.js" defer></script>
+    <script src="Ma_Hoat_Dong/DFS.js" defer></script>
+    <script src="Ma_Hoat_Dong/Prim.js" defer></script>
+    <script src="Ma_Hoat_Dong/Kruskal.js" defer></script>
+    <script src="Ma_Hoat_Dong/Dijkstra.js" defer></script>
+    <script src="Ma_Hoat_Dong/Floyd.js" defer></script>
+    <script src="Ma_Hoat_Dong/App.js" defer></script>
+  </head>
+  <body>
+    <header>
+      <div id="brand_logo">
+        <img src="Ma_Hoat_Dong/699560090_964943006264947_8006853461610033331_n.jpg" id="logo_img" alt="Logo" />
+        <span id="brand_ten">PHONG</span>
+      </div>
+      <button class="button_herder" id="button_chu_trinh_euler">
+        CHU TRÌNH EULER
+      </button>
+      <button class="button_herder" id="button_duong_di_euler">
+        ĐƯỜNG ĐI EULER
+      </button>
+      <button class="button_herder" id="button_dfs">DFS</button>
+      <button class="button_herder" id="button_bfs">BFS</button>
+      <button class="button_herder" id="button_prim">PRIM</button>
+      <button class="button_herder" id="button_kruskal">KRUSKAL</button>
+      <button class="button_herder" id="button_dijkstra">DIJKSTRA</button>
+      <button class="button_herder" id="button_floyd">FLOYD</button>
+    </header>
+    <main>
+      <div id="khung_chuc_nang">
+        <div>
+          <button id="button_lay_file">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              width="18"
+              height="18"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+            Tải File
+          </button>
+          <input
+            style="display: none"
+            type="file"
+            id="input_file"
+            accept=".txt"
+            multiple
+          />
+          <div id="thanh_toc_do">
+            <span>Tốc độ</span>
+            <input type="range" id="slider_toc_do" min="1" max="100" value="40">
+            <span id="hien_toc_do">40</span>
+          </div>
+          <div id="dieu_khien_animation">
+            <button id="btn_buoc_lui">&#9664;</button>
+            <button id="btn_dung_tiep_tuc">&#9654;</button>
+            <button id="btn_buoc_toi">&#9654;&#9654;</button>
+          </div>
+          <button id="btn_xem_ket_qua" style="display:none">Xem kết quả</button>
+          <div id="khung_ket_qua" style="display:none">
+            <span id="ten_thuat_toan"></span>
+            <p id="noi_dung_ket_qua"></p>
+          </div>
+
+          <div id="menu_file">
+            <div id="menu_file_header">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                width="14"
+                height="14"
+              >
+                <path
+                  d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"
+                />
+                <polyline points="13 2 13 9 20 9" />
+              </svg>
+              <span>File đã import</span>
+              <span id="so_luong_file">0</span>
+            </div>
+            <ul id="danh_sach_file">
+              <li class="file_trong">Chưa có file nào</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div id="thanh_dieu_chinh_kich_thuoc"></div>
+      <div id="khung_hien_thi_do_thi">
+        <button id="btn_mo_drawer">&#9776;</button>
+        <button id="button_save_vi_tri">Lưu vị trí</button>
+        <svg id="svg_do_thi"></svg>
+      </div>
+    </main>
+    <div id="mobile_overlay"></div>
+  </body>
+</html>

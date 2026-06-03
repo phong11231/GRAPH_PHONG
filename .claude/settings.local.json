@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Remove-Item \"d:\\\\Web\\\\Graph\\\\check_gan_ok\\\\gan_ok\\\\web_sua\\\\WEB_STUDY\\\\trang.html\" -Confirm:$false)"
+    ]
+  }
+}
