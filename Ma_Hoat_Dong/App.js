@@ -313,228 +313,140 @@ class App {
   }
 
   Chay_Animation_Floyd(ket_qua) {
-    const svg = document.getElementById("svg_do_thi");
+    var svg = document.getElementById("svg_do_thi");
     if (this.anim) clearTimeout(this.anim.timer);
+    this.anim = null;
 
-    const NS_SVG = "http://www.w3.org/2000/svg";
-    let defs = svg.querySelector("defs");
-    if (!defs) { defs = document.createElementNS(NS_SVG, "defs"); svg.prepend(defs); }
-    if (!svg.querySelector("#grad_hang_cot")) {
-      const grad = document.createElementNS(NS_SVG, "linearGradient");
-      grad.setAttribute("id", "grad_hang_cot");
-      grad.setAttribute("x1", "0"); grad.setAttribute("y1", "0");
-      grad.setAttribute("x2", "1"); grad.setAttribute("y2", "0");
-      const s1 = document.createElementNS(NS_SVG, "stop");
-      s1.setAttribute("offset", "50%"); s1.setAttribute("stop-color", "#ef4444");
-      const s2 = document.createElementNS(NS_SVG, "stop");
-      s2.setAttribute("offset", "50%"); s2.setAttribute("stop-color", "#3b82f6");
-      grad.appendChild(s1); grad.appendChild(s2);
-      defs.appendChild(grad);
-    }
-
-    const { events, duong_di, tong, start, end } = ket_qua;
+    var { duong_di, tong } = ket_qua;
     this.ket_qua_hien_tai = duong_di;
     document.getElementById("ten_thuat_toan").textContent = "Floyd (tong: " + tong + ")";
     document.getElementById("noi_dung_ket_qua").textContent = duong_di.join(" → ");
-    document.getElementById("khung_ket_qua").style.display = "none";
-    document.getElementById("btn_xem_ket_qua").style.display = "none";
+    document.getElementById("khung_ket_qua").style.display = "block";
+    document.getElementById("btn_xem_ket_qua").style.display = "block";
 
     this.Reset_Mau(svg);
 
-    const lay_canh = (u, v) =>
-      svg.querySelector('.g-edge[data-u="' + u + '"][data-v="' + v + '"]') ||
-      svg.querySelector('.g-edge[data-u="' + v + '"][data-v="' + u + '"]');
-
-    const to_canh = (canh, mau, glow) => {
-      if (!canh) return;
-      canh.style.stroke = mau;
-      canh.style.strokeWidth = "2.5";
-      canh.style.filter = glow ? "drop-shadow(0 0 6px " + mau + ")" : "none";
+    // highlight duong di xanh la
+    var lay_canh = function(u, v) {
+      return svg.querySelector('.g-edge[data-u="' + u + '"][data-v="' + v + '"]') ||
+        svg.querySelector('.g-edge[data-u="' + v + '"][data-v="' + u + '"]');
     };
+    duong_di.forEach(function(v) {
+      var node = svg.querySelector('.g-node-group[data-index="' + v + '"] .g-node');
+      var lbl = svg.querySelector('.g-node-group[data-index="' + v + '"] .g-label');
+      if (node) { node.style.fill = "#33FF00"; node.style.stroke = "#fff"; }
+      if (lbl) lbl.style.fill = "#000";
+    });
+    for (var i = 1; i < duong_di.length; i++) {
+      var c = lay_canh(duong_di[i - 1], duong_di[i]);
+      if (c) { c.style.stroke = "#33FF00"; c.style.strokeWidth = "3"; c.style.filter = "drop-shadow(0 0 6px #33FF00)"; }
+    }
 
-    const to_dinh = (v, mau, mau_lbl) => {
-      const node = svg.querySelector('.g-node-group[data-index="' + v + '"] .g-node');
-      const lbl  = svg.querySelector('.g-node-group[data-index="' + v + '"] .g-label');
-      if (node) { node.style.fill = mau; node.style.stroke = "#fff"; }
-      if (lbl) lbl.style.fill = mau_lbl;
-    };
-
-    const reset_canh_k = (k) => {
-      svg.querySelectorAll('.g-edge[data-u="' + k + '"], .g-edge[data-v="' + k + '"]').forEach(c => {
-        if (c.style.stroke !== "#33FF00") { c.style.stroke = ""; c.style.filter = ""; c.style.strokeWidth = ""; }
-      });
-    };
-
-    let prev_canh_ij = null, prev_canh_ji = null;
-    let prev_i_check = -1, prev_j_check = -1;
-    let prev_text_el = null;
-    const remove_text_el = () => { if (prev_text_el) { prev_text_el.remove(); prev_text_el = null; } };
-    let pending_blinks = [];
-    const clear_blinks = () => { pending_blinks.forEach(clearTimeout); pending_blinks.length = 0; };
-    const reset_prev_ij = () => {
-      [prev_canh_ij, prev_canh_ji].forEach(c => {
-        if (c && c.style.stroke !== "#33FF00") { c.style.stroke = ""; c.style.filter = ""; c.style.strokeWidth = ""; }
-      });
-      prev_canh_ij = null; prev_canh_ji = null;
-    };
-
-    const ap_dung_event = (idx, animate) => {
-      if (animate === undefined) animate = true;
-      const ev = events[idx];
-      if (ev.type === "init") {
-        return;
-      } else if (ev.type === "select_k") {
-        to_dinh(ev.k, "#33FF00", "#000");
-        svg.querySelectorAll('.g-edge[data-u="' + ev.k + '"], .g-edge[data-v="' + ev.k + '"]').forEach(c => {
-          if (c.style.stroke !== "#33FF00") to_canh(c, "#eab308", true);
-        });
-      } else if (ev.type === "check") {
-        clear_blinks();
-        reset_canh_k(ev.k);
-        reset_prev_ij();
-        remove_text_el();
-        [prev_i_check, prev_j_check].forEach(v => {
-          if (v === -1) return;
-          const n = svg.querySelector('.g-node-group[data-index="' + v + '"] .g-node');
-          const l = svg.querySelector('.g-node-group[data-index="' + v + '"] .g-label');
-          if (n && n.style.fill !== "#33FF00") {
-            n.style.fill = "";
-            n.style.stroke = n.dataset.done ? "#fff" : "";
-            n.style.strokeWidth = n.dataset.done ? "3.5" : "";
-          }
-          if (l) l.style.fill = "";
-        });
-
-        const c_ij = svg.querySelector('.g-edge[data-u="' + ev.i + '"][data-v="' + ev.j + '"]');
-        const c_ji = svg.querySelector('.g-edge[data-u="' + ev.j + '"][data-v="' + ev.i + '"]');
-        const c_ik = lay_canh(ev.i, ev.k);
-        const c_kj = lay_canh(ev.k, ev.j);
-        [c_ij, c_ji].forEach(c => { if (c) to_canh(c, "#ef4444", true); });
-        [c_ik, c_kj].forEach(c => { if (c) to_canh(c, "#eab308", true); });
-        prev_canh_ij = c_ij; prev_canh_ji = c_ji;
-        to_dinh(ev.i, "#ef4444", "#fff");
-        to_dinh(ev.j, "#3b82f6", "#fff");
-        prev_i_check = ev.i; prev_j_check = ev.j;
-
-        const ni = svg.querySelector('.g-node-group[data-index="' + ev.i + '"] .g-node');
-        const nj = svg.querySelector('.g-node-group[data-index="' + ev.j + '"] .g-node');
-        if (ni && nj) {
-          const mx = (parseFloat(ni.getAttribute("cx")) + parseFloat(nj.getAttribute("cx"))) / 2;
-          const my = (parseFloat(ni.getAttribute("cy")) + parseFloat(nj.getAttribute("cy"))) / 2 - 22;
-          const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
-          txt.setAttribute("x", mx); txt.setAttribute("y", my);
-          txt.setAttribute("text-anchor", "middle");
-          txt.setAttribute("font-size", "13"); txt.setAttribute("font-weight", "bold");
-          txt.style.fill = ev.improved ? "#eab308" : "#ef4444";
-          txt.style.stroke = "#111"; txt.style.strokeWidth = "3px"; txt.style.paintOrder = "stroke fill";
-          txt.textContent = ev.improved ? "→ " + ev.qua_k : "Khong doi";
-          svg.appendChild(txt);
-          prev_text_el = txt;
-        }
-
-        if (animate) {
-          if (ev.improved) {
-            [c_ik, c_kj].forEach(c => {
-              if (!c) return;
-              pending_blinks.push(setTimeout(() => to_canh(c, "#fb923c", true), 120));
-              pending_blinks.push(setTimeout(() => to_canh(c, "#eab308", true), 360));
-              pending_blinks.push(setTimeout(() => to_canh(c, "#fb923c", true), 600));
-              pending_blinks.push(setTimeout(() => to_canh(c, "#eab308", true), 840));
-            });
-          } else {
-            if (c_ij) {
-              pending_blinks.push(setTimeout(() => to_canh(c_ij, "#fb923c", true), 120));
-              pending_blinks.push(setTimeout(() => to_canh(c_ij, "#ef4444", true), 360));
-              pending_blinks.push(setTimeout(() => to_canh(c_ij, "#fb923c", true), 600));
-              pending_blinks.push(setTimeout(() => to_canh(c_ij, "#ef4444", true), 840));
-            }
-          }
-        }
-      } else if (ev.type === "done_k") {
-        clear_blinks();
-        prev_i_check = -1; prev_j_check = -1;
-        remove_text_el();
-        svg.querySelectorAll(".g-node").forEach(n => {
-          n.style.fill = "";
-          n.style.stroke = n.dataset.done ? "#fff" : "";
-          n.style.strokeWidth = n.dataset.done ? "3.5" : "";
-        });
-        svg.querySelectorAll(".g-label").forEach(l => { l.style.fill = ""; });
-        svg.querySelectorAll(".g-edge").forEach(c => { c.style.stroke = ""; c.style.filter = ""; c.style.strokeWidth = ""; });
-        const nd = svg.querySelector('.g-node-group[data-index="' + ev.k + '"] .g-node');
-        if (nd) { nd.dataset.done = "1"; nd.style.stroke = "#fff"; nd.style.strokeWidth = "3.5"; }
-      } else if (ev.type === "final") {
-        svg.querySelectorAll(".g-node[data-done]").forEach(n => { delete n.dataset.done; n.style.strokeWidth = ""; });
-        svg.querySelectorAll(".g-node").forEach(n => { n.style.fill = ""; n.style.stroke = ""; });
-        svg.querySelectorAll(".g-label").forEach(l => { l.style.fill = ""; });
-        svg.querySelectorAll(".g-edge").forEach(c => { c.style.stroke = ""; c.style.filter = ""; c.style.strokeWidth = ""; });
-        duong_di.forEach(v => to_dinh(v, "#33FF00", "#000"));
-        for (let i = 1; i < duong_di.length; i++)
-          to_canh(lay_canh(duong_di[i - 1], duong_di[i]), "#33FF00", true);
-        this.Chay_Di_Chuyen_Dot(svg, duong_di);
-      }
-    };
-
-    const khoi_phuc_floyd = () => {
-      svg.querySelectorAll(".g-node[data-done]").forEach(n => { delete n.dataset.done; n.style.strokeWidth = ""; });
-      this.Reset_Mau(svg);
-      for (let i = 0; i < this.anim.buoc; i++) ap_dung_event(i, false);
-    };
-
-    this.anim = {
-      chu_trinh: events, svg: svg, buoc: 0, paused: false, timer: null,
-      fn_buoc: ap_dung_event,
-      fn_replay: khoi_phuc_floyd
-    };
-    document.getElementById("btn_dung_tiep_tuc").innerHTML = "&#9646;&#9646;";
-    this.Bat_Dau_Animation();
+    // chay con chuot di chuyen
+    this.Chay_Di_Chuyen_Dot(svg, duong_di);
   }
 
   Chay_Di_Chuyen_Dot(svg, duong_di) {
-    const old = svg.querySelector("#dot_di_chuyen");
-    if (old) old.remove();
-    const trail = svg.querySelector("#dot_trail");
-    if (trail) trail.remove();
+    var oldG = svg.querySelector("#nhom_dot_di_chuyen");
+    if (oldG) oldG.remove();
+    var oldTrail = svg.querySelector("#dot_trail");
+    if (oldTrail) oldTrail.remove();
 
     if (!this.graph || duong_di.length < 2) return;
-    const pos = this.graph.vi_tri_dinh;
-    const NS = "http://www.w3.org/2000/svg";
+    var pos = this.graph.vi_tri_dinh;
+    var NS = "http://www.w3.org/2000/svg";
 
+    // trail path
     var trailPath = document.createElementNS(NS, "path");
     trailPath.id = "dot_trail";
     trailPath.setAttribute("fill", "none");
-    trailPath.setAttribute("stroke", "#33FF00");
-    trailPath.setAttribute("stroke-width", "3");
+    trailPath.setAttribute("stroke", "#f59e0b");
+    trailPath.setAttribute("stroke-width", "4");
     trailPath.setAttribute("stroke-linecap", "round");
-    trailPath.setAttribute("stroke-dasharray", "6 4");
-    trailPath.setAttribute("opacity", "0.6");
+    trailPath.setAttribute("stroke-dasharray", "8 5");
+    trailPath.setAttribute("opacity", "0.8");
     trailPath.setAttribute("d", "M" + pos[duong_di[0]].x + "," + pos[duong_di[0]].y);
     svg.appendChild(trailPath);
 
+    // group for dot + glow + label
+    var g = document.createElementNS(NS, "g");
+    g.id = "nhom_dot_di_chuyen";
+    svg.appendChild(g);
+
+    // outer glow ring
+    var glow = document.createElementNS(NS, "circle");
+    glow.setAttribute("r", "28");
+    glow.setAttribute("fill", "none");
+    glow.setAttribute("stroke", "#f59e0b");
+    glow.setAttribute("stroke-width", "2");
+    glow.setAttribute("opacity", "0.4");
+    glow.setAttribute("cx", pos[duong_di[0]].x);
+    glow.setAttribute("cy", pos[duong_di[0]].y);
+    g.appendChild(glow);
+
+    // main dot - big and bright
     var dot = document.createElementNS(NS, "circle");
     dot.id = "dot_di_chuyen";
-    dot.setAttribute("r", "10");
+    dot.setAttribute("r", "18");
     dot.setAttribute("fill", "#f59e0b");
     dot.setAttribute("stroke", "#fff");
-    dot.setAttribute("stroke-width", "2.5");
+    dot.setAttribute("stroke-width", "3");
     dot.setAttribute("cx", pos[duong_di[0]].x);
     dot.setAttribute("cy", pos[duong_di[0]].y);
-    dot.style.filter = "drop-shadow(0 0 8px #f59e0b) drop-shadow(0 0 16px #f59e0b)";
-    svg.appendChild(dot);
+    dot.style.filter = "drop-shadow(0 0 12px #f59e0b) drop-shadow(0 0 24px #f59e0b)";
+    g.appendChild(dot);
+
+    // arrow icon inside dot
+    var arrow = document.createElementNS(NS, "text");
+    arrow.setAttribute("x", pos[duong_di[0]].x);
+    arrow.setAttribute("y", pos[duong_di[0]].y + 5);
+    arrow.setAttribute("text-anchor", "middle");
+    arrow.setAttribute("font-size", "18");
+    arrow.setAttribute("font-weight", "bold");
+    arrow.setAttribute("fill", "#000");
+    arrow.setAttribute("pointer-events", "none");
+    arrow.textContent = "▶";
+    g.appendChild(arrow);
+
+    // label showing current step
+    var label = document.createElementNS(NS, "text");
+    label.id = "dot_label";
+    label.setAttribute("x", pos[duong_di[0]].x);
+    label.setAttribute("y", pos[duong_di[0]].y - 30);
+    label.setAttribute("text-anchor", "middle");
+    label.setAttribute("font-size", "14");
+    label.setAttribute("font-weight", "bold");
+    label.setAttribute("fill", "#f59e0b");
+    label.style.stroke = "#111";
+    label.style.strokeWidth = "3px";
+    label.style.paintOrder = "stroke fill";
+    label.textContent = "START → " + duong_di[0];
+    g.appendChild(label);
 
     var step = 0;
-    var self = this;
+    var glowPulse = 0;
+    var glowId = setInterval(function() {
+      glowPulse++;
+      var r = 28 + Math.sin(glowPulse * 0.15) * 6;
+      glow.setAttribute("r", r);
+      glow.setAttribute("opacity", 0.3 + Math.sin(glowPulse * 0.15) * 0.15);
+    }, 40);
 
     function di_chuyen_buoc() {
       if (step >= duong_di.length - 1) {
+        clearInterval(glowId);
         dot.setAttribute("fill", "#33FF00");
-        dot.style.filter = "drop-shadow(0 0 8px #33FF00) drop-shadow(0 0 16px #33FF00)";
+        dot.style.filter = "drop-shadow(0 0 12px #33FF00) drop-shadow(0 0 24px #33FF00)";
+        glow.setAttribute("stroke", "#33FF00");
+        arrow.textContent = "✔";
+        label.textContent = "END → " + duong_di[duong_di.length - 1];
+        label.setAttribute("fill", "#33FF00");
         var pulse = 0;
         var pulseId = setInterval(function() {
           pulse++;
-          var r = 10 + Math.sin(pulse * 0.3) * 4;
+          var r = 18 + Math.sin(pulse * 0.3) * 6;
           dot.setAttribute("r", r);
-          if (pulse > 30) { clearInterval(pulseId); dot.setAttribute("r", "10"); }
+          if (pulse > 40) { clearInterval(pulseId); dot.setAttribute("r", "18"); }
         }, 50);
         return;
       }
@@ -543,9 +455,10 @@ class App {
       var toIdx = duong_di[step + 1];
       var fx = pos[fromIdx].x, fy = pos[fromIdx].y;
       var tx = pos[toIdx].x, ty = pos[toIdx].y;
-      var duration = 800;
+      var duration = 1200;
       var startTime = null;
       var trailD = trailPath.getAttribute("d");
+      label.textContent = duong_di[step] + " → " + duong_di[step + 1];
 
       function animate(ts) {
         if (!startTime) startTime = ts;
@@ -555,19 +468,25 @@ class App {
         var cy = fy + (ty - fy) * ease;
         dot.setAttribute("cx", cx);
         dot.setAttribute("cy", cy);
+        glow.setAttribute("cx", cx);
+        glow.setAttribute("cy", cy);
+        arrow.setAttribute("x", cx);
+        arrow.setAttribute("y", cy + 5);
+        label.setAttribute("x", cx);
+        label.setAttribute("y", cy - 30);
         trailPath.setAttribute("d", trailD + " L" + cx + "," + cy);
 
         if (progress < 1) {
           requestAnimationFrame(animate);
         } else {
           step++;
-          setTimeout(di_chuyen_buoc, 200);
+          setTimeout(di_chuyen_buoc, 300);
         }
       }
       requestAnimationFrame(animate);
     }
 
-    setTimeout(di_chuyen_buoc, 500);
+    setTimeout(di_chuyen_buoc, 600);
   }
 
   Reset_Mau(svg) {
