@@ -827,7 +827,7 @@ main {
   100% { opacity: 0; transform: scale(0.1); }
 }
 
-body { cursor: none; }
-#svg_do_thi { cursor: none; }
-header button { cursor: none; }
-a, button, input, [role="button"] { cursor: none; }
+body { cursor: default; }
+#svg_do_thi { cursor: crosshair; }
+header button { cursor: pointer; }
+a, button, input, [role="button"] { cursor: pointer; }
