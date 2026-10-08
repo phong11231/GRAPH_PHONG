@@ -54,34 +54,20 @@ class App {
     document.getElementById("btn_dung_tiep_tuc").addEventListener("click", () => {
       if (!this.anim) return;
       if (this.anim.paused) {
-        this.anim.paused = false;
-        document.getElementById("btn_dung_tiep_tuc").innerHTML = "&#9646;&#9646;";
-        this.Bat_Dau_Animation();
+        this.anim.fn_play();
       } else {
-        this.anim.paused = true;
-        clearTimeout(this.anim.timer);
-        document.getElementById("btn_dung_tiep_tuc").innerHTML = "&#9654;";
+        this.anim.fn_pause();
       }
     });
 
     document.getElementById("btn_buoc_toi").addEventListener("click", () => {
       if (!this.anim) return;
-      this.anim.paused = true;
-      clearTimeout(this.anim.timer);
-      document.getElementById("btn_dung_tiep_tuc").innerHTML = "&#9654;";
-      if (this.anim.buoc < this.anim.chu_trinh.length) {
-        this.anim.fn_buoc(this.anim.buoc);
-        this.anim.buoc++;
-      }
+      this.anim.fn_step_forward();
     });
 
     document.getElementById("btn_buoc_lui").addEventListener("click", () => {
-      if (!this.anim || this.anim.buoc <= 0) return;
-      this.anim.paused = true;
-      clearTimeout(this.anim.timer);
-      document.getElementById("btn_dung_tiep_tuc").innerHTML = "&#9654;";
-      this.anim.buoc = Math.max(0, this.anim.buoc - 1);
-      this.anim.fn_replay();
+      if (!this.anim) return;
+      this.anim.fn_step_back();
     });
 
     // FLOYD
@@ -355,6 +341,7 @@ class App {
     if (!this.graph || duong_di.length < 2) return;
     var pos = this.graph.vi_tri_dinh;
     var NS = "http://www.w3.org/2000/svg";
+    var self = this;
 
     // trail path
     var trailPath = document.createElementNS(NS, "path");
@@ -384,7 +371,7 @@ class App {
     glow.setAttribute("cy", pos[duong_di[0]].y);
     g.appendChild(glow);
 
-    // main dot - big and bright
+    // main dot
     var dot = document.createElementNS(NS, "circle");
     dot.id = "dot_di_chuyen";
     dot.setAttribute("r", "18");
@@ -408,7 +395,7 @@ class App {
     arrow.textContent = "▶";
     g.appendChild(arrow);
 
-    // label showing current step
+    // label
     var label = document.createElementNS(NS, "text");
     label.id = "dot_label";
     label.setAttribute("x", pos[duong_di[0]].x);
@@ -423,7 +410,6 @@ class App {
     label.textContent = "START → " + duong_di[0];
     g.appendChild(label);
 
-    var step = 0;
     var glowPulse = 0;
     var glowId = setInterval(function() {
       glowPulse++;
@@ -432,61 +418,143 @@ class App {
       glow.setAttribute("opacity", 0.3 + Math.sin(glowPulse * 0.15) * 0.15);
     }, 40);
 
-    function di_chuyen_buoc() {
-      if (step >= duong_di.length - 1) {
-        clearInterval(glowId);
-        dot.setAttribute("fill", "#33FF00");
-        dot.style.filter = "drop-shadow(0 0 12px #33FF00) drop-shadow(0 0 24px #33FF00)";
-        glow.setAttribute("stroke", "#33FF00");
-        arrow.textContent = "✔";
-        label.textContent = "END → " + duong_di[duong_di.length - 1];
-        label.setAttribute("fill", "#33FF00");
-        var pulse = 0;
-        var pulseId = setInterval(function() {
-          pulse++;
-          var r = 18 + Math.sin(pulse * 0.3) * 6;
-          dot.setAttribute("r", r);
-          if (pulse > 40) { clearInterval(pulseId); dot.setAttribute("r", "18"); }
-        }, 50);
+    function dat_vi_tri(cx, cy) {
+      dot.setAttribute("cx", cx);
+      dot.setAttribute("cy", cy);
+      glow.setAttribute("cx", cx);
+      glow.setAttribute("cy", cy);
+      arrow.setAttribute("x", cx);
+      arrow.setAttribute("y", cy + 5);
+      label.setAttribute("x", cx);
+      label.setAttribute("y", cy - 30);
+    }
+
+    function nhay_den_buoc(s) {
+      // dat dot o vi tri dinh thu s trong duong_di
+      var idx = Math.min(s, duong_di.length - 1);
+      var px = pos[duong_di[idx]].x, py = pos[duong_di[idx]].y;
+      dat_vi_tri(px, py);
+      // ve lai trail
+      var d = "M" + pos[duong_di[0]].x + "," + pos[duong_di[0]].y;
+      for (var i = 1; i <= idx; i++) {
+        d += " L" + pos[duong_di[i]].x + "," + pos[duong_di[i]].y;
+      }
+      trailPath.setAttribute("d", d);
+      if (idx >= duong_di.length - 1) {
+        label.textContent = "END → " + duong_di[idx];
+      } else if (idx === 0) {
+        label.textContent = "START → " + duong_di[0];
+      } else {
+        label.textContent = duong_di[idx - 1] + " → " + duong_di[idx];
+      }
+      // reset dot style
+      dot.setAttribute("fill", "#f59e0b");
+      dot.style.filter = "drop-shadow(0 0 12px #f59e0b) drop-shadow(0 0 24px #f59e0b)";
+      glow.setAttribute("stroke", "#f59e0b");
+      arrow.textContent = "▶";
+      label.setAttribute("fill", "#f59e0b");
+    }
+
+    function hieu_ung_den_dich() {
+      clearInterval(glowId);
+      dot.setAttribute("fill", "#33FF00");
+      dot.style.filter = "drop-shadow(0 0 12px #33FF00) drop-shadow(0 0 24px #33FF00)";
+      glow.setAttribute("stroke", "#33FF00");
+      arrow.textContent = "✔";
+      label.textContent = "END → " + duong_di[duong_di.length - 1];
+      label.setAttribute("fill", "#33FF00");
+      var pulse = 0;
+      var pulseId = setInterval(function() {
+        pulse++;
+        var r = 18 + Math.sin(pulse * 0.3) * 6;
+        dot.setAttribute("r", r);
+        if (pulse > 40) { clearInterval(pulseId); dot.setAttribute("r", "18"); }
+      }, 50);
+    }
+
+    // anim state - buoc = so dinh da di qua (0 = dang o dinh dau)
+    this.anim = {
+      paused: false,
+      timer: null,
+      raf: null,
+      buoc: 0,
+      tong_buoc: duong_di.length - 1
+    };
+
+    function lay_duration() {
+      var speed = parseInt(document.getElementById("slider_toc_do").value) || 40;
+      return Math.round(3000 / speed);
+    }
+
+    function di_chuyen_1_canh(callback) {
+      if (self.anim.buoc >= duong_di.length - 1) {
+        hieu_ung_den_dich();
         return;
       }
-
-      var fromIdx = duong_di[step];
-      var toIdx = duong_di[step + 1];
+      var fromIdx = duong_di[self.anim.buoc];
+      var toIdx = duong_di[self.anim.buoc + 1];
       var fx = pos[fromIdx].x, fy = pos[fromIdx].y;
       var tx = pos[toIdx].x, ty = pos[toIdx].y;
-      var duration = 1200;
+      var duration = lay_duration();
       var startTime = null;
       var trailD = trailPath.getAttribute("d");
-      label.textContent = duong_di[step] + " → " + duong_di[step + 1];
+      label.textContent = fromIdx + " → " + toIdx;
 
-      function animate(ts) {
+      function frame(ts) {
+        if (self.anim.paused) return;
         if (!startTime) startTime = ts;
         var progress = Math.min((ts - startTime) / duration, 1);
         var ease = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
         var cx = fx + (tx - fx) * ease;
         var cy = fy + (ty - fy) * ease;
-        dot.setAttribute("cx", cx);
-        dot.setAttribute("cy", cy);
-        glow.setAttribute("cx", cx);
-        glow.setAttribute("cy", cy);
-        arrow.setAttribute("x", cx);
-        arrow.setAttribute("y", cy + 5);
-        label.setAttribute("x", cx);
-        label.setAttribute("y", cy - 30);
+        dat_vi_tri(cx, cy);
         trailPath.setAttribute("d", trailD + " L" + cx + "," + cy);
 
         if (progress < 1) {
-          requestAnimationFrame(animate);
+          self.anim.raf = requestAnimationFrame(frame);
         } else {
-          step++;
-          setTimeout(di_chuyen_buoc, 300);
+          self.anim.buoc++;
+          if (self.anim.buoc >= duong_di.length - 1) {
+            hieu_ung_den_dich();
+          } else {
+            self.anim.timer = setTimeout(function() { di_chuyen_1_canh(); }, 200);
+          }
         }
       }
-      requestAnimationFrame(animate);
+      self.anim.raf = requestAnimationFrame(frame);
     }
 
-    setTimeout(di_chuyen_buoc, 600);
+    // luu cac ham de nut dieu khien goi
+    this.anim.fn_play = function() {
+      if (self.anim.buoc >= duong_di.length - 1) return;
+      self.anim.paused = false;
+      document.getElementById("btn_dung_tiep_tuc").innerHTML = "&#9646;&#9646;";
+      di_chuyen_1_canh();
+    };
+    this.anim.fn_pause = function() {
+      self.anim.paused = true;
+      if (self.anim.raf) cancelAnimationFrame(self.anim.raf);
+      if (self.anim.timer) clearTimeout(self.anim.timer);
+      document.getElementById("btn_dung_tiep_tuc").innerHTML = "&#9654;";
+    };
+    this.anim.fn_step_forward = function() {
+      self.anim.fn_pause();
+      if (self.anim.buoc < duong_di.length - 1) {
+        self.anim.buoc++;
+        nhay_den_buoc(self.anim.buoc);
+        if (self.anim.buoc >= duong_di.length - 1) hieu_ung_den_dich();
+      }
+    };
+    this.anim.fn_step_back = function() {
+      self.anim.fn_pause();
+      if (self.anim.buoc > 0) {
+        self.anim.buoc--;
+        nhay_den_buoc(self.anim.buoc);
+      }
+    };
+
+    document.getElementById("btn_dung_tiep_tuc").innerHTML = "&#9646;&#9646;";
+    self.anim.timer = setTimeout(function() { di_chuyen_1_canh(); }, 600);
   }
 
   Reset_Mau(svg) {
