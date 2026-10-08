@@ -471,6 +471,7 @@ class App {
         duong_di.forEach(v => to_dinh(v, "#33FF00", "#000"));
         for (let i = 1; i < duong_di.length; i++)
           to_canh(lay_canh(duong_di[i - 1], duong_di[i]), "#33FF00", true);
+        this.Chay_Di_Chuyen_Dot(svg, duong_di);
       }
     };
 
@@ -489,11 +490,93 @@ class App {
     this.Bat_Dau_Animation();
   }
 
+  Chay_Di_Chuyen_Dot(svg, duong_di) {
+    const old = svg.querySelector("#dot_di_chuyen");
+    if (old) old.remove();
+    const trail = svg.querySelector("#dot_trail");
+    if (trail) trail.remove();
+
+    if (!this.graph || duong_di.length < 2) return;
+    const pos = this.graph.vi_tri_dinh;
+    const NS = "http://www.w3.org/2000/svg";
+
+    var trailPath = document.createElementNS(NS, "path");
+    trailPath.id = "dot_trail";
+    trailPath.setAttribute("fill", "none");
+    trailPath.setAttribute("stroke", "#33FF00");
+    trailPath.setAttribute("stroke-width", "3");
+    trailPath.setAttribute("stroke-linecap", "round");
+    trailPath.setAttribute("stroke-dasharray", "6 4");
+    trailPath.setAttribute("opacity", "0.6");
+    trailPath.setAttribute("d", "M" + pos[duong_di[0]].x + "," + pos[duong_di[0]].y);
+    svg.appendChild(trailPath);
+
+    var dot = document.createElementNS(NS, "circle");
+    dot.id = "dot_di_chuyen";
+    dot.setAttribute("r", "10");
+    dot.setAttribute("fill", "#f59e0b");
+    dot.setAttribute("stroke", "#fff");
+    dot.setAttribute("stroke-width", "2.5");
+    dot.setAttribute("cx", pos[duong_di[0]].x);
+    dot.setAttribute("cy", pos[duong_di[0]].y);
+    dot.style.filter = "drop-shadow(0 0 8px #f59e0b) drop-shadow(0 0 16px #f59e0b)";
+    svg.appendChild(dot);
+
+    var step = 0;
+    var self = this;
+
+    function di_chuyen_buoc() {
+      if (step >= duong_di.length - 1) {
+        dot.setAttribute("fill", "#33FF00");
+        dot.style.filter = "drop-shadow(0 0 8px #33FF00) drop-shadow(0 0 16px #33FF00)";
+        var pulse = 0;
+        var pulseId = setInterval(function() {
+          pulse++;
+          var r = 10 + Math.sin(pulse * 0.3) * 4;
+          dot.setAttribute("r", r);
+          if (pulse > 30) { clearInterval(pulseId); dot.setAttribute("r", "10"); }
+        }, 50);
+        return;
+      }
+
+      var fromIdx = duong_di[step];
+      var toIdx = duong_di[step + 1];
+      var fx = pos[fromIdx].x, fy = pos[fromIdx].y;
+      var tx = pos[toIdx].x, ty = pos[toIdx].y;
+      var duration = 800;
+      var startTime = null;
+      var trailD = trailPath.getAttribute("d");
+
+      function animate(ts) {
+        if (!startTime) startTime = ts;
+        var progress = Math.min((ts - startTime) / duration, 1);
+        var ease = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+        var cx = fx + (tx - fx) * ease;
+        var cy = fy + (ty - fy) * ease;
+        dot.setAttribute("cx", cx);
+        dot.setAttribute("cy", cy);
+        trailPath.setAttribute("d", trailD + " L" + cx + "," + cy);
+
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        } else {
+          step++;
+          setTimeout(di_chuyen_buoc, 200);
+        }
+      }
+      requestAnimationFrame(animate);
+    }
+
+    setTimeout(di_chuyen_buoc, 500);
+  }
+
   Reset_Mau(svg) {
     svg.querySelectorAll(".g-node").forEach(n => { n.style.fill = ""; n.style.stroke = ""; });
     svg.querySelectorAll(".g-label").forEach(l => { l.style.fill = ""; });
     svg.querySelectorAll(".g-edge").forEach(e => { e.style.stroke = ""; e.style.filter = ""; e.style.strokeWidth = ""; });
     svg.querySelectorAll(".g-sublabel-group").forEach(sl => { sl.style.display = "none"; });
+    var oldDot = svg.querySelector("#dot_di_chuyen"); if (oldDot) oldDot.remove();
+    var oldTrail = svg.querySelector("#dot_trail"); if (oldTrail) oldTrail.remove();
   }
 
   Bat_Dau_Animation() {
