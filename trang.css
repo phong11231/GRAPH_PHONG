@@ -154,6 +154,13 @@ header {
   cursor: not-allowed;
 }
 
+.button_herder.active_mode {
+  border-color: #2dd4bf;
+  color: #2dd4bf;
+  background: linear-gradient(145deg, #0f3d35, #0a2e28);
+  box-shadow: 0 0 12px rgba(45, 212, 191, 0.4), inset 0 0 8px rgba(45, 212, 191, 0.15);
+}
+
 main {
   display: flex;
   width: 100%;
@@ -772,3 +779,55 @@ main {
 .list_menu_file.mac_dinh .span_file {
   color: #94a3b8;
 }
+
+/* ===== CURSOR TRAIL ===== */
+.cursor-dot {
+  position: fixed;
+  pointer-events: none;
+  border-radius: 50%;
+  z-index: 9998;
+  will-change: transform, opacity;
+}
+
+#cursor-main {
+  width: 8px;
+  height: 8px;
+  background: #2dd4bf;
+  box-shadow: 0 0 12px #2dd4bf, 0 0 24px rgba(45,212,191,0.4);
+  z-index: 9999;
+  transition: transform 0.05s ease-out;
+}
+
+#cursor-ring {
+  width: 32px;
+  height: 32px;
+  border: 1.5px solid rgba(45,212,191,0.5);
+  background: transparent;
+  transition: transform 0.12s ease-out, width 0.2s, height 0.2s, border-color 0.2s;
+}
+
+#cursor-ring.hover-node {
+  width: 48px;
+  height: 48px;
+  border-color: #f59e0b;
+  border-width: 2px;
+}
+
+.trail-particle {
+  position: fixed;
+  pointer-events: none;
+  border-radius: 50%;
+  z-index: 9997;
+  background: #2dd4bf;
+  animation: trailFade 0.6s ease-out forwards;
+}
+
+@keyframes trailFade {
+  0% { opacity: 0.7; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.1); }
+}
+
+body { cursor: none; }
+#svg_do_thi { cursor: none; }
+header button { cursor: none; }
+a, button, input, [role="button"] { cursor: none; }

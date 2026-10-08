@@ -1,23 +1,72 @@
 class Graph {
   constructor(file) {
-    this.noi_dung = null;
-    this.ten_file = file.name;
-    const reader = new FileReader();
-    reader.readAsText(file);
-    reader.onload = (e) => {
-      this.noi_dung = e.target.result;
-      this.Doc_Ma_Tran();
-      this.Ve_Do_Thi();
-    };
     this.ma_tran = [];
-    this.so_dinh = null;
+    this.so_dinh = 0;
+    this.vi_tri_dinh = [];
+    this.ten_file = "";
+
+    if (file) {
+      this.ten_file = file.name;
+      const reader = new FileReader();
+      reader.readAsText(file);
+      reader.onload = (e) => {
+        this.noi_dung = e.target.result;
+        this.Doc_Ma_Tran();
+        this.Ve_Do_Thi();
+      };
+    }
 
     document.getElementById("button_save_vi_tri").onclick = () => {
+      if (!this.ten_file) return;
       localStorage.setItem("vi_tri_" + this.ten_file, JSON.stringify(this.vi_tri_dinh));
       const btn = document.getElementById("button_save_vi_tri");
-      btn.textContent = "Đã lưu!";
-      setTimeout(() => btn.textContent = "Lưu vị trí", 1500);
+      btn.textContent = "Da luu!";
+      setTimeout(() => btn.textContent = "Luu vi tri", 1500);
     };
+  }
+
+  static Tao_Rong() {
+    const g = new Graph(null);
+    g.ten_file = "_custom_";
+    return g;
+  }
+
+  Them_Dinh(x, y) {
+    const idx = this.so_dinh;
+    this.so_dinh++;
+    for (let i = 0; i < idx; i++) {
+      this.ma_tran[i].push(0);
+    }
+    this.ma_tran.push(new Array(this.so_dinh).fill(0));
+    this.vi_tri_dinh.push({ x, y });
+    this.Ve_Do_Thi();
+    return idx;
+  }
+
+  Xoa_Dinh(idx) {
+    if (idx < 0 || idx >= this.so_dinh) return;
+    this.so_dinh--;
+    this.ma_tran.splice(idx, 1);
+    for (let i = 0; i < this.so_dinh; i++) {
+      this.ma_tran[i].splice(idx, 1);
+    }
+    this.vi_tri_dinh.splice(idx, 1);
+    this.Ve_Do_Thi();
+  }
+
+  Them_Canh(u, v, w) {
+    if (u < 0 || u >= this.so_dinh || v < 0 || v >= this.so_dinh) return;
+    this.ma_tran[u][v] = w;
+    this.ma_tran[v][u] = w;
+    this.Ve_Do_Thi();
+  }
+
+  Xoa_Het() {
+    this.so_dinh = 0;
+    this.ma_tran = [];
+    this.vi_tri_dinh = [];
+    const svg = document.getElementById("svg_do_thi");
+    svg.innerHTML = "";
   }
 
   Doc_Ma_Tran() {
@@ -67,29 +116,30 @@ class Graph {
     const svg = document.getElementById("svg_do_thi");
     svg.innerHTML = "";
 
-    const W = svg.clientWidth;
-    const H = svg.clientHeight;
-    const r = Math.min(W, H) * 0.38;
+    if (this.so_dinh === 0) return;
+
+    const W = svg.clientWidth || 800;
+    const H = svg.clientHeight || 500;
     const co_huong = this.Kiem_Tra_Co_Huong();
     const co_trong_so = this.ma_tran.some(row => row.some(w => w > 1));
 
-    // load vị trí đã lưu nếu có
-    const vi_tri_luu = JSON.parse(localStorage.getItem("vi_tri_" + this.ten_file));
-    if (vi_tri_luu && vi_tri_luu.length === this.so_dinh) {
-      this.vi_tri_dinh = vi_tri_luu;
-    } else {
-    // tính vị trí đỉnh xếp tròn
-    this.vi_tri_dinh = [];
-    for (let i = 0; i < this.so_dinh; i++) {
-      const goc = (2 * Math.PI * i) / this.so_dinh - Math.PI / 2;
-      this.vi_tri_dinh.push({
-        x: W / 2 + r * Math.cos(goc),
-        y: H / 2 + r * Math.sin(goc),
-      });
-    }
+    if (this.vi_tri_dinh.length === 0 || this.vi_tri_dinh.length !== this.so_dinh) {
+      const vi_tri_luu = this.ten_file ? JSON.parse(localStorage.getItem("vi_tri_" + this.ten_file)) : null;
+      if (vi_tri_luu && vi_tri_luu.length === this.so_dinh) {
+        this.vi_tri_dinh = vi_tri_luu;
+      } else {
+        this.vi_tri_dinh = [];
+        const r = Math.min(W, H) * 0.38;
+        for (let i = 0; i < this.so_dinh; i++) {
+          const goc = (2 * Math.PI * i) / this.so_dinh - Math.PI / 2;
+          this.vi_tri_dinh.push({
+            x: W / 2 + r * Math.cos(goc),
+            y: H / 2 + r * Math.sin(goc),
+          });
+        }
+      }
     }
 
-    // marker mũi tên cho đồ thị có hướng
     if (co_huong) {
       const defs = document.createElementNS(NS, "defs");
       const marker = document.createElementNS(NS, "marker");
@@ -108,7 +158,6 @@ class Graph {
       svg.appendChild(defs);
     }
 
-    // vẽ cạnh
     for (let u = 0; u < this.so_dinh; u++) {
       for (let v = co_huong ? 0 : u + 1; v < this.so_dinh; v++) {
         if (this.ma_tran[u][v] === 0) continue;
@@ -135,7 +184,6 @@ class Graph {
         if (co_huong) el.setAttribute("marker-end", "url(#mui_ten)");
         svg.appendChild(el);
 
-        // trọng số
         const w = this.ma_tran[u][v];
         if (co_trong_so && w > 0) {
           const lp = cong
@@ -157,7 +205,6 @@ class Graph {
       }
     }
 
-    // vẽ đỉnh
     for (let i = 0; i < this.so_dinh; i++) {
       const g = document.createElementNS(NS, "g");
       g.setAttribute("class", "g-node-group");
@@ -193,39 +240,9 @@ class Graph {
       sublabel_g.appendChild(sublabel_bg);
       sublabel_g.appendChild(sublabel_text);
 
-      // thẻ Dijkstra
-      const card_g = document.createElementNS(NS, "g");
-      card_g.setAttribute("class", "g-card");
-      card_g.style.display = "none";
-
-      const card_bg = document.createElementNS(NS, "rect");
-      card_bg.setAttribute("class", "g-card-bg");
-      card_bg.setAttribute("x", this.vi_tri_dinh[i].x + R_DINH + 4);
-      card_bg.setAttribute("y", this.vi_tri_dinh[i].y - 18);
-      card_bg.setAttribute("width", 44);
-      card_bg.setAttribute("height", 34);
-      card_bg.setAttribute("rx", 5);
-
-      const card_dist = document.createElementNS(NS, "text");
-      card_dist.setAttribute("class", "g-card-dist");
-      card_dist.setAttribute("x", this.vi_tri_dinh[i].x + R_DINH + 26);
-      card_dist.setAttribute("y", this.vi_tri_dinh[i].y - 5);
-      card_dist.textContent = "∞";
-
-      const card_from = document.createElementNS(NS, "text");
-      card_from.setAttribute("class", "g-card-from");
-      card_from.setAttribute("x", this.vi_tri_dinh[i].x + R_DINH + 26);
-      card_from.setAttribute("y", this.vi_tri_dinh[i].y + 10);
-      card_from.textContent = "←-";
-
-      card_g.appendChild(card_bg);
-      card_g.appendChild(card_dist);
-      card_g.appendChild(card_from);
-
       g.appendChild(circle);
       g.appendChild(label);
       g.appendChild(sublabel_g);
-      g.appendChild(card_g);
       svg.appendChild(g);
     }
 
@@ -289,14 +306,8 @@ class Graph {
       this.vi_tri_dinh[dang_keo].y = pt.y - oy;
 
       const g = svg.querySelector(`.g-node-group[data-index="${dang_keo}"]`);
-      g.querySelector("circle").setAttribute(
-        "cx",
-        this.vi_tri_dinh[dang_keo].x,
-      );
-      g.querySelector("circle").setAttribute(
-        "cy",
-        this.vi_tri_dinh[dang_keo].y,
-      );
+      g.querySelector("circle").setAttribute("cx", this.vi_tri_dinh[dang_keo].x);
+      g.querySelector("circle").setAttribute("cy", this.vi_tri_dinh[dang_keo].y);
       g.querySelector("text").setAttribute("x", this.vi_tri_dinh[dang_keo].x);
       g.querySelector("text").setAttribute("y", this.vi_tri_dinh[dang_keo].y + 5);
 
@@ -304,14 +315,6 @@ class Graph {
       const sl_tx = g.querySelector(".g-sublabel-text");
       if (sl_bg) { sl_bg.setAttribute("cx", this.vi_tri_dinh[dang_keo].x); sl_bg.setAttribute("cy", this.vi_tri_dinh[dang_keo].y + R + 10); }
       if (sl_tx) { sl_tx.setAttribute("x", this.vi_tri_dinh[dang_keo].x); sl_tx.setAttribute("y", this.vi_tri_dinh[dang_keo].y + R + 10); }
-
-      const cx = this.vi_tri_dinh[dang_keo].x, cy = this.vi_tri_dinh[dang_keo].y;
-      const cb = g.querySelector(".g-card-bg");
-      const cd = g.querySelector(".g-card-dist");
-      const cf = g.querySelector(".g-card-from");
-      if (cb) { cb.setAttribute("x", cx + R + 4); cb.setAttribute("y", cy - 18); }
-      if (cd) { cd.setAttribute("x", cx + R + 26); cd.setAttribute("y", cy - 5); }
-      if (cf) { cf.setAttribute("x", cx + R + 26); cf.setAttribute("y", cy + 10); }
 
       svg.querySelectorAll(".g-edge").forEach((el) => {
         const u = parseInt(el.dataset.u),
@@ -348,7 +351,6 @@ class Graph {
     svg.addEventListener("mouseup", stop);
     svg.addEventListener("mouseleave", stop);
 
-    // Touch support
     svg.addEventListener("touchstart", (e) => {
       const g = e.target.closest(".g-node-group");
       if (!g) return;
@@ -364,8 +366,6 @@ class Graph {
       const pt = this._svg_point_touch(svg, e.touches[0]);
       this.vi_tri_dinh[dang_keo].x = pt.x - ox;
       this.vi_tri_dinh[dang_keo].y = pt.y - oy;
-      const fakeEvent = { clientX: e.touches[0].clientX, clientY: e.touches[0].clientY };
-      // reuse mousemove logic bằng cách dispatch fake coords
       const g = svg.querySelector(`.g-node-group[data-index="${dang_keo}"]`);
       g.querySelector("circle").setAttribute("cx", this.vi_tri_dinh[dang_keo].x);
       g.querySelector("circle").setAttribute("cy", this.vi_tri_dinh[dang_keo].y);
@@ -375,11 +375,6 @@ class Graph {
       const sl_tx = g.querySelector(".g-sublabel-text");
       if (sl_bg) { sl_bg.setAttribute("cx", this.vi_tri_dinh[dang_keo].x); sl_bg.setAttribute("cy", this.vi_tri_dinh[dang_keo].y + R + 10); }
       if (sl_tx) { sl_tx.setAttribute("x", this.vi_tri_dinh[dang_keo].x); sl_tx.setAttribute("y", this.vi_tri_dinh[dang_keo].y + R + 10); }
-      const cx = this.vi_tri_dinh[dang_keo].x, cy = this.vi_tri_dinh[dang_keo].y;
-      const cb = g.querySelector(".g-card-bg"), cd = g.querySelector(".g-card-dist"), cf = g.querySelector(".g-card-from");
-      if (cb) { cb.setAttribute("x", cx + R + 4); cb.setAttribute("y", cy - 18); }
-      if (cd) { cd.setAttribute("x", cx + R + 26); cd.setAttribute("y", cy - 5); }
-      if (cf) { cf.setAttribute("x", cx + R + 26); cf.setAttribute("y", cy + 10); }
       svg.querySelectorAll(".g-edge").forEach((el) => {
         const u = parseInt(el.dataset.u), v = parseInt(el.dataset.v);
         if (u !== dang_keo && v !== dang_keo) return;

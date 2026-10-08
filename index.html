@@ -3,17 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
+    <title>Floyd-Warshall — Tìm đường đi ngắn nhất</title>
     <link rel="stylesheet" href="trang.css" />
     <script src="trang.js" defer></script>
     <script src="Ma_Hoat_Dong/Graph.js" defer></script>
-    <script src="Ma_Hoat_Dong/Chu_Trinh_Euler.js" defer></script>
-    <script src="Ma_Hoat_Dong/Duong_Di_Euler.js" defer></script>
-    <script src="Ma_Hoat_Dong/BFS.js" defer></script>
-    <script src="Ma_Hoat_Dong/DFS.js" defer></script>
-    <script src="Ma_Hoat_Dong/Prim.js" defer></script>
-    <script src="Ma_Hoat_Dong/Kruskal.js" defer></script>
-    <script src="Ma_Hoat_Dong/Dijkstra.js" defer></script>
     <script src="Ma_Hoat_Dong/Floyd.js" defer></script>
     <script src="Ma_Hoat_Dong/App.js" defer></script>
   </head>
@@ -23,18 +16,11 @@
         <img src="Ma_Hoat_Dong/699560090_964943006264947_8006853461610033331_n.jpg" id="logo_img" alt="Logo" />
         <span id="brand_ten">PHONG</span>
       </div>
-      <button class="button_herder" id="button_chu_trinh_euler">
-        CHU TRÌNH EULER
-      </button>
-      <button class="button_herder" id="button_duong_di_euler">
-        ĐƯỜNG ĐI EULER
-      </button>
-      <button class="button_herder" id="button_dfs">DFS</button>
-      <button class="button_herder" id="button_bfs">BFS</button>
-      <button class="button_herder" id="button_prim">PRIM</button>
-      <button class="button_herder" id="button_kruskal">KRUSKAL</button>
-      <button class="button_herder" id="button_dijkstra">DIJKSTRA</button>
+      <button class="button_herder" id="button_them_dinh">THÊM ĐỈNH</button>
+      <button class="button_herder" id="button_them_canh">THÊM CẠNH</button>
+      <button class="button_herder" id="button_xoa_dinh">XÓA ĐỈNH</button>
       <button class="button_herder" id="button_floyd">FLOYD</button>
+      <button class="button_herder" id="button_xoa_het">XÓA HẾT</button>
     </header>
     <main>
       <div id="khung_chuc_nang">
@@ -77,6 +63,9 @@
           <div id="khung_ket_qua" style="display:none">
             <span id="ten_thuat_toan"></span>
             <p id="noi_dung_ket_qua"></p>
+          </div>
+
+          <div id="che_do_hien_tai" style="padding:8px 12px;font-size:12px;color:#2dd4bf;font-weight:600;display:none">
           </div>
 
           <div id="menu_file">
