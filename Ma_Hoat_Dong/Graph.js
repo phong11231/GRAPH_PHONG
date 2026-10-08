@@ -246,7 +246,9 @@ class Graph {
       svg.appendChild(g);
     }
 
-    this._Ket_Noi_Keo_Tha(svg, co_huong, R_DINH);
+    if (this._dragAbort) this._dragAbort.abort();
+    this._dragAbort = new AbortController();
+    this._Ket_Noi_Keo_Tha(svg, co_huong, R_DINH, this._dragAbort.signal);
   }
 
   _diem_dau_cuoi(u, v, co_huong, R) {
@@ -284,10 +286,11 @@ class Graph {
     };
   }
 
-  _Ket_Noi_Keo_Tha(svg, co_huong, R) {
+  _Ket_Noi_Keo_Tha(svg, co_huong, R, signal) {
     let dang_keo = null,
       ox = 0,
       oy = 0;
+    const opts = { signal };
 
     svg.addEventListener("mousedown", (e) => {
       const g = e.target.closest(".g-node-group");
@@ -297,7 +300,7 @@ class Graph {
       ox = pt.x - this.vi_tri_dinh[dang_keo].x;
       oy = pt.y - this.vi_tri_dinh[dang_keo].y;
       e.preventDefault();
-    });
+    }, opts);
 
     svg.addEventListener("mousemove", (e) => {
       if (dang_keo === null) return;
@@ -345,11 +348,11 @@ class Graph {
         t.setAttribute("x", lp.x);
         t.setAttribute("y", lp.y);
       });
-    });
+    }, opts);
 
     const stop = () => { dang_keo = null; };
-    svg.addEventListener("mouseup", stop);
-    svg.addEventListener("mouseleave", stop);
+    svg.addEventListener("mouseup", stop, opts);
+    svg.addEventListener("mouseleave", stop, opts);
 
     svg.addEventListener("touchstart", (e) => {
       const g = e.target.closest(".g-node-group");
@@ -359,7 +362,7 @@ class Graph {
       ox = pt.x - this.vi_tri_dinh[dang_keo].x;
       oy = pt.y - this.vi_tri_dinh[dang_keo].y;
       e.preventDefault();
-    }, { passive: false });
+    }, { passive: false, signal });
 
     svg.addEventListener("touchmove", (e) => {
       if (dang_keo === null) return;
@@ -388,9 +391,9 @@ class Graph {
         t.setAttribute("x", lp.x); t.setAttribute("y", lp.y);
       });
       e.preventDefault();
-    }, { passive: false });
+    }, { passive: false, signal });
 
-    svg.addEventListener("touchend", () => { dang_keo = null; });
+    svg.addEventListener("touchend", () => { dang_keo = null; }, opts);
   }
 
   _svg_point(svg, e) {

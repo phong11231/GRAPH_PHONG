@@ -23,9 +23,6 @@ class App {
           this.list_file.push(e.target.result);
           this.so_luong_file.innerText = this.list_file.length;
           this.Them_Menu_File(file, e.target.result);
-          localStorage.setItem("app_content_" + file.name, e.target.result);
-          const ds = JSON.parse(localStorage.getItem("app_files") || "[]");
-          if (!ds.includes(file.name)) { ds.push(file.name); localStorage.setItem("app_files", JSON.stringify(ds)); }
         };
       }
       this.input_file.value = "";
@@ -42,8 +39,12 @@ class App {
       khung.style.display = khung.style.display === "none" ? "block" : "none";
     });
 
-    this.Tai_Do_Thi_Mac_Dinh();
-    this.Khoi_Phuc_Tu_LocalStorage();
+    // xoa localStorage cu (file mac dinh cu)
+    localStorage.removeItem("app_files");
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith("app_content_")) localStorage.removeItem(key);
+    }
 
     const slider = document.getElementById("slider_toc_do");
     const hien_toc_do = document.getElementById("hien_toc_do");
@@ -122,6 +123,28 @@ class App {
         this.graph = Graph.Tao_Rong();
       }
       this.graph.Xoa_Het();
+    });
+
+    // XUAT FILE TXT
+    document.getElementById("button_xuat_file").addEventListener("click", () => {
+      this.Tat_Che_Do();
+      if (!this.graph || this.graph.so_dinh === 0) { alert("Khong co do thi de xuat!"); return; }
+      var lines = [];
+      lines.push(String(this.graph.so_dinh));
+      for (var i = 0; i < this.graph.so_dinh; i++) {
+        var row = [];
+        for (var j = 0; j < this.graph.so_dinh; j++) {
+          row.push(String(this.graph.ma_tran[i][j]));
+        }
+        lines.push(row.join(" "));
+      }
+      var text = lines.join("\n");
+      var blob = new Blob([text], { type: "text/plain" });
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "graph_floyd.txt";
+      a.click();
+      URL.revokeObjectURL(a.href);
     });
 
     // SVG click handler
@@ -533,12 +556,6 @@ class App {
       const index = this.list_file.indexOf(content);
       this.list_file.splice(index, 1);
       this.so_luong_file.innerText = this.list_file.length;
-      if (!la_mac_dinh) {
-        localStorage.removeItem("app_content_" + file.name);
-        const ds = JSON.parse(localStorage.getItem("app_files") || "[]");
-        const i2 = ds.indexOf(file.name);
-        if (i2 !== -1) { ds.splice(i2, 1); localStorage.setItem("app_files", JSON.stringify(ds)); }
-      }
       if (this.list_file.length === 0) {
         const empty = document.createElement("li");
         empty.className = "file_trong";
